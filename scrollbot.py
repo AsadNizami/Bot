@@ -1,3 +1,4 @@
+import argparse
 import pathlib
 from time import sleep, time
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
@@ -135,5 +136,12 @@ class ScrollBot:
         sleep(3)
 
 
+def get_args():
+    parser = argparse.ArgumentParser(description='Scroll Bot Instagram')
+    parser.add_argument('--total_like', help='Total number of posts to like', type=int)
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
-    bot = ScrollBot(cred.username, cred.password, 20)
+    like = get_args().total_like
+    bot = ScrollBot(cred.username, cred.password, like)
