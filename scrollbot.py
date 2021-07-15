@@ -1,6 +1,8 @@
 import argparse
 from time import sleep, time
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
+from urllib3.exceptions import MaxRetryError
+
 import credentials as cred
 from selenium import webdriver, common
 from selenium.webdriver.common.by import By
@@ -29,17 +31,23 @@ class ScrollBot:
         x_like = '_8-yf5'
         self.all_posts = list()
         posts = self.driver.find_elements_by_class_name(x_like)
-        for post in posts:
-            if (post.get_attribute('aria-label') == 'Like' or post.get_attribute('aria-label') == 'Unlike')\
-                    and post.get_attribute('height') == '24' and post.location['y'] not in self.PROCESSED:
-                self.all_posts.append(post)
-                self.PROCESSED.add(post.location['y'])
+        try:
+            for post in posts:
+                if (post.get_attribute('aria-label') == 'Like' or post.get_attribute('aria-label') == 'Unlike')\
+                        and post.get_attribute('height') == '24' and post.location['y'] not in self.PROCESSED:
+                    self.all_posts.append(post)
+                    self.PROCESSED.add(post.location['y'])
+        except MaxRetryError as err:
+            self.driver.quit()
+            print('All for now')
+
         print('length of all posts:', len(self.all_posts))
         end = time()
         print('Time taken(s) to find the elements:', end-start)
-        if len(self.all_posts) == 0:
+        if len(self.all_posts) < 1:
             self.driver.quit()
             print('No more post')
+            exit()
         sleep(2)
 
     def start(self):
