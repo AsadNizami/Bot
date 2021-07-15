@@ -3,6 +3,12 @@
 ```bash 
   pip install -r requirements.txt
 ```
+
+### Configure the credentials.py file
+```bash 
+  username = <username_here>
+  password = <password_here>
+```
 ## Usage
 
 ```bash 
