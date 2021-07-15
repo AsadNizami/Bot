@@ -1,5 +1,4 @@
 import argparse
-import pathlib
 from time import sleep, time
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 import credentials as cred
@@ -37,7 +36,10 @@ class ScrollBot:
                 self.PROCESSED.add(post.location['y'])
         print('length of all posts:', len(self.all_posts))
         end = time()
-        print('Time taken to find the elements:', end-start)
+        print('Time taken(s) to find the elements:', end-start)
+        if len(self.all_posts) == 0:
+            self.driver.quit()
+            print('No more post')
         sleep(2)
 
     def start(self):
@@ -58,7 +60,6 @@ class ScrollBot:
     def configure(self):
         options = webdriver.ChromeOptions()
         options.add_argument(f"user-agent={self.USER_AGENT}")
-        options.add_argument(f"user-data-dir={pathlib.Path(__file__).parent.absolute().joinpath('chrome-profile')}")
         options.add_experimental_option("excludeSwitches", ['enable-automation'])
         driver = webdriver.Chrome(executable_path=self.EXE_PATH, chrome_options=options)
         driver.maximize_window()
@@ -118,12 +119,12 @@ class ScrollBot:
                 return
 
     def like(self, current_post):
-        print('Current post:', current_post.get_attribute('aria-label'))
         self.scroll(current_post)
         sleep(1)
         post_status = current_post.get_attribute('fill')
         new_action = ActionChains(self.driver)
         try:
+            print('Current post:', current_post.get_attribute('aria-label'))
             new_action.move_to_element_with_offset(current_post, 40, -50).click_and_hold().perform()
             new_action.release().perform()
             sleep(3)
