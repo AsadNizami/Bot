@@ -1,8 +1,7 @@
 import argparse
 from time import sleep, time
-from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
+from selenium.common.exceptions import StaleElementReferenceException, ElementNotInteractableException
 from urllib3.exceptions import MaxRetryError
-
 import credentials as cred
 from selenium import webdriver, common
 from selenium.webdriver.common.by import By
@@ -15,6 +14,7 @@ class ScrollBot:
     EXE_PATH = r'.\Utility\chromedriver'
     USER_AGENT = r'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
     PROCESSED = set()
+    SCROLL_OFFSET = 690
 
     def __init__(self, username, password, max_like=7):
         self.username = username
@@ -34,13 +34,16 @@ class ScrollBot:
         try:
             for post in posts:
                 if (post.get_attribute('aria-label') == 'Like' or post.get_attribute('aria-label') == 'Unlike')\
-                        and post.get_attribute('height') == '24' and post.location['y'] not in self.PROCESSED:
+                        and post.get_attribute('height') == '24' and post.location['y'] not in self.PROCESSED and \
+                        post.location['y'] != 0 and post.location['x'] != 0:
                     self.all_posts.append(post)
                     self.PROCESSED.add(post.location['y'])
-        except MaxRetryError as err:
+        except MaxRetryError:
             self.driver.quit()
             print('All for now')
-
+        print('Location for all post!')
+        for post in self.all_posts:
+            print(f'{post.location=}')
         print('length of all posts:', len(self.all_posts))
         end = time()
         print('Time taken(s) to find the elements:', end-start)
@@ -68,6 +71,7 @@ class ScrollBot:
     def configure(self):
         options = webdriver.ChromeOptions()
         options.add_argument(f"user-agent={self.USER_AGENT}")
+        options.add_argument("--incognito")
         options.add_experimental_option("excludeSwitches", ['enable-automation'])
         driver = webdriver.Chrome(executable_path=self.EXE_PATH, chrome_options=options)
         driver.maximize_window()
@@ -111,7 +115,7 @@ class ScrollBot:
             pass
 
     def scroll(self, element):
-        scroll_offset = 680
+        print(f'{self.current_position=} {element.location=}')
         required_position = element.location
         y = required_position['y']
         if y < self.current_position:
@@ -121,27 +125,33 @@ class ScrollBot:
             self.driver.execute_script("window.scrollTo(0, " + str(self.current_position) + ")")
             sleep(0.4)
             self.current_position += 50
-            if self.current_position + scroll_offset > y:
+            if self.current_position + self.SCROLL_OFFSET >= y:
                 print('Current position:', y)
                 sleep(3)
                 return
 
     def like(self, current_post):
+        print(f'Current post:', current_post.location['y'])
         self.scroll(current_post)
         sleep(1)
         post_status = current_post.get_attribute('fill')
         new_action = ActionChains(self.driver)
         try:
-            print('Current post:', current_post.get_attribute('aria-label'))
+            print('Current action:', current_post.get_attribute('aria-label'))
+            if current_post.location['y'] < self.current_position:
+                return
             new_action.move_to_element_with_offset(current_post, 40, -50).click_and_hold().perform()
             new_action.release().perform()
-            sleep(3)
+            sleep(5)
             if post_status != '#ed4956':
                 current_post.click()
+                print(f'Post Liked {self.current_position=} {current_post.location=}')
 
         except StaleElementReferenceException as err:
             print('Last Coordinates:', self.current_position)
             print('Stale Element Encountered, post skipped\n', err)
+        except ElementNotInteractableException:
+            print('Could not interact with element at location y=', current_post.location['y'])
         sleep(3)
 
 
