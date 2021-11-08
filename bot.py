@@ -11,6 +11,7 @@ DATABASE = dict()
 
 class Bot:
     PATH = r'.\Utility\chromedriver'
+    USER_AGENT = r'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
 
     def __init__(self):
         self.driver = self.configure()
@@ -29,8 +30,12 @@ class Bot:
 
     def configure(self):
         options = webdriver.ChromeOptions()
-        options.add_argument(' -incognito ')
+        options.add_argument(f"user-agent={self.USER_AGENT}")
+        options.add_argument("--incognito")
+        options.add_experimental_option("excludeSwitches", ['enable-automation'])
         driver = webdriver.Chrome(executable_path=self.PATH, chrome_options=options)
+        driver.maximize_window()
+
         return driver
 
     def refresh(self):
@@ -102,7 +107,6 @@ class Bot:
 
     def like_comment(self, username):
         links = DATABASE[username]
-        xpath = '//*[@id="react-root"]/section/main/div/div[1]/article/div[3]/section[1]/span[1]/button'
 
         for link in links:
             self.driver.get(link)
@@ -111,10 +115,11 @@ class Bot:
                 check_div = self.driver.find_element_by_id('react-root')
                 if check_div.text == '':
                     self.refresh()
+                    print('React ID Not found')
                 else:
                     break
             try:
-                self.driver.find_element_by_xpath(xpath).click()
+                self.driver.find_elements_by_class_name('wpO6b  ')[1].click()
             except common.exceptions.NoSuchElementException as err:
                 print(err)
                 self.refresh()

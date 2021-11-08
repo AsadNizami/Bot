@@ -142,7 +142,7 @@ class ScrollBot:
                 return
             new_action.move_to_element_with_offset(current_post, 40, -50).click_and_hold().perform()
             new_action.release().perform()
-            sleep(5)
+            sleep(3)
             if post_status != '#ed4956':
                 current_post.click()
                 print(f'Post Liked {self.current_position=} {current_post.location=}')
